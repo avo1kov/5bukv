@@ -43,7 +43,7 @@ def filter_nouns(nouns, no, exact, not_there):
 
 if __name__ == "__main__":
     filename = 'sorted_nouns.txt'
-    no = ''
+    no = 'слово'
     exact = ['', '', '', '', '']
     not_there = ['', '', '', '', '']
 

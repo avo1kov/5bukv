@@ -1,17 +1,5 @@
 <script lang="ts">
     import Word from "./Word.svelte";
-
-	export let name: string;
-	let result = 123;
-
-	async function calculateResult() {
-        for (let i = 0; i < 100; i++) {
-            await new Promise(resolve => setTimeout(resolve, 21	)); // delay for 0.1 second
-            result += 1;
-        }
-    }
-
-    calculateResult();
 </script>
 
 <main>

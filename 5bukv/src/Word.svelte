@@ -1,8 +1,6 @@
 <script lang="ts">
-    type Word = {
-        letter: string;
-        color: string | undefined;
-    }[];
+    import { loadNouns, filterNouns } from "./utils"
+    import type { Rule, Word } from "./types"
 
     let possible: string[] = [];
     let nouns: string[] = [];
@@ -16,163 +14,105 @@
         { letter: '', color: undefined }
     ];
 
-    interface Rule {
-        no: string[];
-        exact: string[];
-        notThere: string[];
-    }
-
     let rule: Rule = {
         no: [],
         exact: ['', '', '', '', ''],
-        notThere: ['', 'р', '', '', '']
+        notThere: ['', '', '', '', '']
     }
+
+    const maxLettersNumbers: {[l: string]: number} = {}
 
     let rulesHistory: Rule[] = [];
     
     let currentColorInputIndex: number = 0;
 
-    loadNouns(filename)
-        .then((n: string[]) => {
-            nouns = n;
-            updateWord();
-        })
-        .catch((error: Error) => {
-            console.error('Error loading nouns:', error);
-        });
+    loadNouns(filename).then((n: string[]) => {
+        nouns = n;
+        updateWord();
+    })
 
-    function findLettersFromNotThere(rule: Rule): string[] {
-        const foundLetters: Set<string> = new Set();
+    // function findLettersFromNotThere(rule: Rule): string[] {
+    //     const foundLetters: Set<string> = new Set();
 
-        for (let i = 0; i < rule.notThere.length; i++) {
-            const splitted = rule.notThere.map(position => position.split(''))
-            splitted.forEach(letters => letters.forEach(letter => foundLetters.add(letter)))
-        }
+    //     for (let i = 0; i < rule.notThere.length; i++) {
+    //         const splitted = rule.notThere.map(position => position.split(''))
+    //         splitted.forEach(letters => letters.forEach(letter => foundLetters.add(letter)))
+    //     }
 
-        return Array.from(foundLetters);
-    }
+    //     return Array.from(foundLetters);
+    // }
 
-    console.log(rule.notThere)
-    console.log('=>', findLettersFromNotThere(rule))
+    // console.log(rule.notThere)
+    // console.log('=>', findLettersFromNotThere(rule))
 
     function fillLetter(index: number, color: string): void {
         word[index].color = color;
-        currentColorInputIndex++;
-
-        while (currentColorInputIndex < 5 && word[currentColorInputIndex].color === 'yellow') {
-            currentColorInputIndex++;
-        }
-
-        if (currentColorInputIndex >= 5) {
-            currentColorInputIndex = 0;
-
-            while (currentColorInputIndex < 5 && word[currentColorInputIndex].color === 'yellow') {
-                currentColorInputIndex++;
-            }
-
-            updateState();
-        }
-
-        const greyLetters: string[] = word.filter(letter => letter.color === 'grey').map(l => l.letter);
 
         const newRule = { ...rule };
-        newRule.no.push(...greyLetters);
 
-        for (let i = 0; i < 5; i++) {
-            if (word[i].color === 'yellow') {
-                newRule.exact[i] = word[i].letter;
-            } else if (word[i].color === 'white') {
-                newRule.notThere[i] += word[i].letter;
-            }
+        if (word[currentColorInputIndex].color === 'yellow') {
+            newRule.exact[currentColorInputIndex] = word[currentColorInputIndex].letter;
+        } else if (word[currentColorInputIndex].color === 'white') {
+            newRule.notThere[currentColorInputIndex] += word[currentColorInputIndex].letter;
+        } else if (word[currentColorInputIndex].color === 'grey') {
+            newRule.no.push(word[currentColorInputIndex].letter);
         }
 
         rulesHistory.push(rule)
         rule = { ...newRule }
+
+        currentColorInputIndex = getNextColorInputIndex(word, currentColorInputIndex);
+
+        if (currentColorInputIndex >= 5) {
+            updateWord();
+        }
     }
 
-    function updateState(): void {
-        updateWord();
+    function getNextColorInputIndex(word: Word, currentIndex: number) {
+        currentIndex++;
+
+        while (currentIndex < 5 && word[currentIndex].color === 'yellow') {
+            currentIndex++;
+        }
+
+        return currentIndex;
     }
 
     function updateWord(): void {
+        currentColorInputIndex = getNextColorInputIndex(word, -1);
         const result = filterNouns(nouns, rule)
         rulesHistory.push(result.newRule)
         rule = result.newRule
         possible = result.possible
-
-        console.log({possible})
+        
+        console.log(rule)
 
         if (!possible.length) return;
+
+        const lettersNumbers: {[letter: string]: number} = {}
+        for (let i = 0; i < 5; i++) {
+            if (word[i].color === 'white') {
+                if (lettersNumbers[word[i].letter] !== undefined) {
+                    lettersNumbers[word[i].letter] += 1;
+                } else {
+                    lettersNumbers[word[i].letter] = 1;
+                }
+
+                if (lettersNumbers[word[i].letter] > (maxLettersNumbers[word[i].letter] || 0)) {
+                    maxLettersNumbers[word[i].letter] = lettersNumbers[word[i].letter];
+                }
+            }
+        }
 
         for (let i = 0; i < 5; i++) {
             word[i].letter = possible[0][i];
             word[i].color = word[i].color === 'yellow' ? 'yellow' : undefined;
         }
+
+        console.log(maxLettersNumbers);
     }
 
-    function loadNouns(filename: string): Promise<string[]> {
-        return fetch(filename)
-            .then(response => response.text())
-            .then(data => data.split('\n').map(line => line.trim()));
-    }
-
-    function containsNoChars(noun: string, no: string[]): boolean {
-        return no.some(char => noun.includes(char));
-    }
-
-    function doesNotMatchExact(noun: string, exact: string[]): boolean {
-        for (let i = 0; i < 5; i++) {
-            if (exact[i] !== '' && noun[i] !== exact[i]) {
-                console.log('here', i, exact[i], noun[i], exact)
-                return true;
-            }
-        }
-        return false;
-    }
-
-    function matchesNotThere(noun: string, notThere: string[]): boolean {
-        for (let i = 0; i < 5; i++) {
-            for (const l of notThere[i]) {
-                if (l !== '' && noun[i] === l) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    function doesNotContainMustBe(noun: string, mustBe: Set<string>): boolean {
-        return mustBe.size === 0 ? false : !Array.from(mustBe).every(char => noun.includes(char));
-    }
-
-    function filterNouns(nouns: string[], rule: Rule): {possible: string[], newRule} {
-        const newRule = { ...rule };
-        let mustBe: Set<string> = new Set();
-
-        for (let i = 0; i < 5; i++) {
-            for (const element of rule.exact[i]) {
-                mustBe.add(element);
-            }
-            for (const element of rule.notThere[i].split('')) {
-                mustBe.add(element);
-            }
-        }
-
-        mustBe = new Set([...mustBe].filter(item => item !== undefined));
-        newRule.no = rule.no.filter(char => !mustBe.has(char));
-
-        const possible: string[] = [];
-        for (const noun of nouns) {
-            if (containsNoChars(noun, rule.no)) continue;
-            if (doesNotMatchExact(noun, rule.exact)) continue;
-            if (matchesNotThere(noun, rule.notThere)) continue;
-            if (doesNotContainMustBe(noun, mustBe)) continue;
-
-            possible.push(noun);
-        }
-
-        return {possible, newRule};
-    }
+    
 </script>
 
 <template>
@@ -195,9 +135,6 @@
             </div>
         </div>
         <div class=hint>
-            <div class=label>
-                Попробуйте это слово и заполните цвета
-            </div>
             <div class=word>
                 {#each word as {letter, color}, index}
                     <div
@@ -210,6 +147,9 @@
                         {letter}
                     </div>
                 {/each}
+            </div>
+            <div class=label>
+                Попробуйте это слово и заполните цвета
             </div>
             <div class=color-input>
                 <div class="letter grey" on:click={() => fillLetter(currentColorInputIndex, 'grey')} on:keydown={() => {}}>
@@ -257,14 +197,14 @@
     .color-input {
         display: flex;
         gap: 1.5vw;
-        margin: 0 auto 20vw auto;
+        margin: 4vw auto 20vw auto;
     }
 
     .word {
         display: flex;
         justify-content: center;
         gap: 1.5vw;
-        margin: 5vw auto;
+        margin: 4vw auto;
     }
 
     .letter {

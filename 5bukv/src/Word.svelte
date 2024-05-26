@@ -86,9 +86,7 @@
         possible = result.possible
         
         console.log(rule)
-
-        if (!possible.length) return;
-
+        
         const lettersNumbers: {[letter: string]: number} = {}
         for (let i = 0; i < 5; i++) {
             if (word[i].color === 'white') {
@@ -97,19 +95,21 @@
                 } else {
                     lettersNumbers[word[i].letter] = 1;
                 }
-
+                
                 if (lettersNumbers[word[i].letter] > (maxLettersNumbers[word[i].letter] || 0)) {
                     maxLettersNumbers[word[i].letter] = lettersNumbers[word[i].letter];
                 }
             }
         }
 
+        console.log('=>', maxLettersNumbers)
+
+        if (!possible.length) return;
+
         for (let i = 0; i < 5; i++) {
             word[i].letter = possible[0][i];
             word[i].color = word[i].color === 'yellow' ? 'yellow' : undefined;
         }
-
-        console.log(maxLettersNumbers);
     }
 
     
@@ -119,7 +119,7 @@
     <div class=wrap>
         <div class=history>
             <div class=label>
-                Хм-м-м. Что же это может быть...
+                Хм-м-м. Что же это за слово...
             </div>
             <div class="word">
                 {#each word as {letter, color}, index}

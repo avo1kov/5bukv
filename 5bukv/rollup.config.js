@@ -1,20 +1,21 @@
-import { spawn } from 'child_process';
-import svelte from 'rollup-plugin-svelte';
-import commonjs from '@rollup/plugin-commonjs';
-import terser from '@rollup/plugin-terser';
-import resolve from '@rollup/plugin-node-resolve';
-import livereload from 'rollup-plugin-livereload';
-import css from 'rollup-plugin-css-only';
-import sveltePreprocess from 'svelte-preprocess';
-import typescript from '@rollup/plugin-typescript';
+import { spawn } from 'child_process'
+import svelte from 'rollup-plugin-svelte'
+import commonjs from '@rollup/plugin-commonjs'
+import terser from '@rollup/plugin-terser'
+import resolve from '@rollup/plugin-node-resolve'
+import livereload from 'rollup-plugin-livereload'
+import css from 'rollup-plugin-css-only'
+import sveltePreprocess from 'svelte-preprocess'
+import typescript from '@rollup/plugin-typescript'
+import copy from 'rollup-plugin-copy-watch'
 
 const production = !process.env.ROLLUP_WATCH;
 
 function serve() {
-	let server;
+	let server
 
 	function toExit() {
-		if (server) server.kill(0);
+		if (server) server.kill(0)
 	}
 
 	return {
@@ -65,6 +66,12 @@ export default {
 		typescript({
 			sourceMap: !production,
 			inlineSources: !production
+		}),
+		copy({
+			targets: [
+				{ src: 'src/sorted_nouns.txt', dest: 'public' }
+			],
+			watch: 'src'
 		}),
 
 		// In dev mode, call `npm run start` once

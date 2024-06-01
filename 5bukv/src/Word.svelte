@@ -4,7 +4,7 @@
 
     let possible: string[] = [];
     let nouns: string[] = [];
-    const filename: string = '/sorted_nouns.txt';
+    const filename: string = 'https://volkov.media/5bukv/sorted_nouns.txt';
 
     let word: Word = [
         { letter: '', color: undefined },

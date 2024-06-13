@@ -2,9 +2,10 @@
     import { loadNouns, filterNouns } from "./utils"
     import type { Rule, Word } from "./types"
 
-    let possible: string[] = [];
-    let nouns: string[] = [];
-    const filename: string = 'https://volkov.media/5bukv/sorted_nouns.txt';
+    let possible: string[] = []
+    let randomShift = 0
+    let nouns: string[] = []
+    const filename: string = 'https://volkov.media/5bukv/sorted_nouns.txt'
 
     let word: Word = [
         { letter: '', color: undefined },
@@ -107,11 +108,26 @@
         if (!possible.length) return;
 
         for (let i = 0; i < 5; i++) {
-            word[i].letter = possible[0][i];
+            word[i].letter = possible[randomShift][i];
+            word[i].color = word[i].color === 'yellow' ? 'yellow' : undefined;
+        }
+
+        randomShift = 0
+    }
+
+    const enterWord = () => {
+        const newWord = prompt()
+
+        for (let i = 0; i < 5; i++) {
+            word[i].letter = newWord[i];
             word[i].color = word[i].color === 'yellow' ? 'yellow' : undefined;
         }
     }
 
+    const setNextWord = () => {
+        randomShift++
+        updateWord()
+    }
     
 </script>
 
@@ -133,6 +149,8 @@
                     </div>
                 {/each}
             </div>
+            <button on:click={enterWord}>Своё слово</button>
+            <button on:click={setNextWord}>Другое</button>
         </div>
         <div class=hint>
             <div class=word>

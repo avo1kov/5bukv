@@ -65,7 +65,8 @@
         currentColorInputIndex = getNextColorInputIndex(word, currentColorInputIndex);
 
         if (currentColorInputIndex >= 5) {
-            updateWord();
+            randomShift = 0
+            updateWord()
         }
     }
 
@@ -111,8 +112,6 @@
             word[i].letter = possible[randomShift][i];
             word[i].color = word[i].color === 'yellow' ? 'yellow' : undefined;
         }
-
-        randomShift = 0
     }
 
     const enterWord = () => {
